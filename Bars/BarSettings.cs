@@ -28,7 +28,7 @@ namespace Bars
         public float MaxValue { get; set; }
 
         /// <summary>
-        /// Sets the interval of the segments of the abr
+        /// Sets the interval of the segments of the bar
         /// </summary>
         public int Interval { get; set; }
 
@@ -38,18 +38,24 @@ namespace Bars
         public Func<float> ValueOverride { get; set; }
 
         /// <summary>
+        /// Sets the margin that will be used
+        /// </summary>
+        public int Margin { get; set; }
+
+        /// <summary>
         /// Creates a new bar-settings instance
         /// </summary>
         /// <param name="maxValue"></param>
         /// <param name="interval"></param>
         /// <param name="fillColor"></param>
         /// <param name="overflowColor"></param>
-        public BarSettings(float maxValue, int interval, Color fillColor, Color overflowColor)
+        public BarSettings(float maxValue, int interval, Color fillColor, Color overflowColor, int margin)
         {
             MaxValue = maxValue;
             Interval = interval;
             FillColor = fillColor;
             OverflowColor = overflowColor;
+            Margin = margin;
         }
 
         /// <summary>
@@ -60,7 +66,7 @@ namespace Bars
         /// <param name="interval"></param>
         /// <param name="fillColor"></param>
         /// <param name="overflowColor"></param>
-        public BarSettings(Func<float> valueOverride, float maxValue, int interval, Color fillColor, Color overflowColor) : this(maxValue, interval, fillColor, overflowColor)
+        public BarSettings(Func<float> valueOverride, float maxValue, int interval, Color fillColor, Color overflowColor, int margin) : this(maxValue, interval, fillColor, overflowColor, margin)
         {
             ValueOverride = valueOverride;
         }

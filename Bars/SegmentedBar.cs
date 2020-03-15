@@ -19,6 +19,7 @@ namespace Bars
         private Func<float> _valueOverr;
         private Color _fillColor;
         private Color _overflowColor;
+        private int _margin;
 
         #region Control Properties
         /// <summary>
@@ -26,24 +27,12 @@ namespace Bars
         /// </summary>
         public float Value
         {
-            get
-            {
-                if (_valueOverr == null)
-                {
-                    return _value;
-                }
-                else
-                {
-                    return _valueOverr();
-                }
-                
-            }
+            get => _valueOverr?.Invoke() ?? _value;
             set
             {
                 if (value < 0)
-                {
                     throw new ArgumentOutOfRangeException("Value cannot be negative");
-                }
+
                 _value = value;
                 Refresh();
             }
@@ -54,16 +43,12 @@ namespace Bars
         /// </summary>
         public float MaxValue
         {
-            get
-            {
-                return _maxValue;
-            }
+            get => _maxValue;
             set
             {
                 if (_maxValue <= 0)
-                {
                     throw new ArgumentOutOfRangeException("Maxvalue cannot be negative or zero");
-                }
+
                 _maxValue = value;
                 Refresh();
             }
@@ -74,10 +59,7 @@ namespace Bars
         /// </summary>
         public Func<float> OverrideValueCode
         {
-            get
-            {
-                return _valueOverr;
-            }
+            get => _valueOverr;
             set
             {
                 _valueOverr = value;
@@ -87,16 +69,11 @@ namespace Bars
 
         public int Interval
         {
-            get
-            {
-                return _interval;
-            }
+            get => _interval;
             set
             {
                 if (_interval <= 0)
-                {
                     throw new ArgumentOutOfRangeException("Interval must be atleast 1");
-                }
 
                 _interval = value;
                 Refresh();
@@ -108,10 +85,7 @@ namespace Bars
         /// </summary>
         public Color FillColor
         {
-            get
-            {
-                return _fillColor;
-            }
+            get => _fillColor;
             set
             {
                 _fillColor = value;
@@ -124,13 +98,23 @@ namespace Bars
         /// </summary>
         public Color OverflowColor
         {
-            get
-            {
-                return _overflowColor;
-            }
+            get => _overflowColor;
             set
             {
                 _overflowColor = value;
+                Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the amount of pixels of margin the bar has
+        /// </summary>
+        public int BarMargin
+        {
+            get => _margin;
+            set
+            {
+                _margin = value;
                 Refresh();
             }
         }
@@ -149,55 +133,52 @@ namespace Bars
             _valueOverr = settings.ValueOverride;
             _fillColor = settings.FillColor;
             _overflowColor = settings.OverflowColor;
+            _margin = settings.Margin;
+
+            Refresh();
 
         }
         #endregion
 
         #region Native Windows Events
-        protected override bool DoubleBuffered
-        {
-            get
-            {
-                return true;
-            }
-        }
+        protected override bool DoubleBuffered => true;
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
-            Brush BGBrush, FGBrush, OFBrush, STBrush;
+            Brush BGBrush = new SolidBrush(BackColor); //The background brush
+            Brush FGBrush = new SolidBrush(FillColor); //The filling brush
+            Brush OFBrush = new SolidBrush(OverflowColor); //The overflow brush
+            Brush STBrush = new SolidBrush(ForeColor); //The string brush
 
-            BGBrush = new SolidBrush(BackColor); //The background brush
-            FGBrush = new SolidBrush(FillColor); //The filling brush
-            OFBrush = new SolidBrush(OverflowColor); //The overflow brush
-            STBrush = new SolidBrush(ForeColor); //The string brush
-
-            e.Graphics.Clear(Color.LightGray);
-            e.Graphics.DrawRectangle(Pens.Silver, new Rectangle(0, 0, Width - 1, Height - 1));
+            Rectangle bounds = new Rectangle(BarMargin, BarMargin, Width - (2 * BarMargin), Height - (2 * BarMargin));
+            e.Graphics.Clear(ColorTranslator.FromHtml("#222"));
+            const int K = 3;
+            e.Graphics.FillRectangle(Brushes.Silver, bounds.X - K, bounds.Y - K, bounds.Width + 2 * K, bounds.Height + 2 * K);
 
             if (Value > 0)
             {
                 if (Value > MaxValue)
                 {
-                    e.Graphics.FillRectangle(OFBrush, 1, 1, Width - 2, Height - 2);
-                    e.Graphics.FillRectangle(FGBrush, 1, 1, MaxValue / Value * Width, Height - 2);
+                    e.Graphics.FillRectangle(OFBrush, bounds);
+                    e.Graphics.FillRectangle(FGBrush, bounds.X, bounds.Y, MaxValue / Value * bounds.Width, bounds.Height);
                 }
                 else
                 {
-                    e.Graphics.FillRectangle(FGBrush, 1, 1, (int)Math.Ceiling((float)Value / MaxValue * Width) - 2, Height - 2);
+                    e.Graphics.FillRectangle(FGBrush, bounds.X, bounds.Y, (int)Math.Ceiling(Value / MaxValue * bounds.Width), bounds.Height);
                 }
             }
             else
             {
                 if (Math.Abs(Value) > MaxValue)
                 {
-                    e.Graphics.FillRectangle(Brushes.OrangeRed, 1, 1, Width - 2, Height - 2);
-                    e.Graphics.FillRectangle(Brushes.Yellow, 1, 1, MaxValue / Math.Abs(Value) * Width, Height - 2);
+                    e.Graphics.FillRectangle(Brushes.OrangeRed, bounds);
+                    e.Graphics.FillRectangle(Brushes.Yellow, bounds.X, bounds.Y, MaxValue / Math.Abs(Value) * bounds.Width, bounds.Height);
                 }
                 else
                 {
-                    e.Graphics.FillRectangle(Brushes.Yellow, 1, 1, (int)Math.Ceiling((float)Math.Abs(Value) / MaxValue * Width) - 2, Height - 2);
+                    e.Graphics.FillRectangle(Brushes.Yellow, bounds.X, bounds.Y, (int)Math.Ceiling(Math.Abs(Value) / MaxValue * bounds.Width), bounds.Height);
                 }
             }
 
@@ -208,10 +189,39 @@ namespace Bars
             {
                 if (i % Interval == 0)
                 {
-                    e.Graphics.DrawLine(Pens.Silver, new PointF((i / localMaxValue * Width) - 1, 0), new PointF((i / localMaxValue * Width) - 1, Height));
-                    e.Graphics.DrawLine(SystemPens.Control, new PointF((i / localMaxValue * Width), 0), new PointF((i / localMaxValue * Width), Height - 1));
-                    e.Graphics.DrawLine(Pens.Silver, new PointF((i / localMaxValue * Width) + 1, 0), new PointF((i / localMaxValue * Width) + 1, Height));
-                    e.Graphics.DrawString(GetStringForBarSegment(i), SystemFonts.DefaultFont, STBrush, new PointF((i / localMaxValue * Width) - 1, 1), new StringFormat(StringFormatFlags.DirectionRightToLeft));
+                    e.Graphics.DrawLine(
+                        pen: Pens.Silver, 
+                        x1: (i / localMaxValue * bounds.Width) - 1 + BarMargin, 
+                        y1: bounds.Top, 
+                        x2: (i / localMaxValue * bounds.Width) - 1 + BarMargin, 
+                        y2: bounds.Bottom    
+                    );
+
+                    e.Graphics.DrawLine(
+                        pen: SystemPens.Control, 
+                        x1: (i / localMaxValue * bounds.Width) + BarMargin, 
+                        y1: bounds.Top, 
+                        x2: (i / localMaxValue * bounds.Width) + BarMargin, 
+                        y2: bounds.Bottom
+                    );
+
+                    e.Graphics.DrawLine(
+                        pen: Pens.Silver, 
+                        x1: (i / localMaxValue * bounds.Width) + 1 + BarMargin,
+                        y1: bounds.Top, 
+                        x2: (i / localMaxValue * bounds.Width) + 1 + BarMargin, 
+                        y2: bounds.Bottom
+                    );
+
+                    e.Graphics.DrawString(
+                        s: GetStringForBarSegment(i), 
+                        font: SystemFonts.DefaultFont, 
+                        brush: STBrush, 
+                        point: new PointF(
+                            x: (i / localMaxValue * bounds.Width) - 1, 
+                            y: BarMargin), 
+                        format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
+                    );
                 }
             }
 
@@ -234,10 +244,8 @@ namespace Bars
         /// </summary>
         /// <param name="segmentValue">The segment that is being drawn</param>
         /// <returns></returns>
-        protected virtual string GetStringForBarSegment(int segmentValue)
-        {
-            return segmentValue.ToString();
-        }
+        protected virtual string GetStringForBarSegment(int segmentValue) 
+            => segmentValue.ToString();
         #endregion
 
     }
