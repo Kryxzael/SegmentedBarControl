@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ namespace Bars
         private Color _fillColor;
         private Color _overflowColor;
         private int _margin;
+        private bool _drawHatched;
+        private bool _drawHatchedOverflow;
 
         #region Control Properties
         /// <summary>
@@ -67,6 +70,9 @@ namespace Bars
             }
         }
 
+        /// <summary>
+        /// Gets or sets the size of each segment
+        /// </summary>
         public int Interval
         {
             get => _interval;
@@ -119,6 +125,32 @@ namespace Bars
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether the normal fill of the bar will be drawn with a hatched brush
+        /// </summary>
+        public bool DrawHatched 
+        {
+            get => _drawHatched;
+            set 
+            {
+                _drawHatched = value;
+                Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether the overflow fill of the bar will be drawn with a hatched brush
+        /// </summary>
+        public bool DrawHatchedOverflow
+        {
+            get => _drawHatchedOverflow;
+            set
+            {
+                _drawHatchedOverflow = value;
+                Refresh();
+            }
+        }
+
         #endregion
 
         #region Public functions
@@ -147,90 +179,175 @@ namespace Bars
         {
             base.OnPaint(e);
 
-            Brush BGBrush = new SolidBrush(BackColor); //The background brush
-            Brush FGBrush = new SolidBrush(FillColor); //The filling brush
-            Brush OFBrush = new SolidBrush(OverflowColor); //The overflow brush
-            Brush STBrush = new SolidBrush(ForeColor); //The string brush
+            /*
+             * Create brushes based on settings
+             */
+            Brush backgroundBrush = new SolidBrush(BackColor);
+            Brush textBrush = new SolidBrush(ForeColor);
+            Brush fillBrush, overflowBrush;
 
-            Rectangle bounds = new Rectangle(BarMargin, BarMargin, Width - (2 * BarMargin), Height - (2 * BarMargin));
-            e.Graphics.Clear(ColorTranslator.FromHtml("#222"));
-            const int K = 3;
-            e.Graphics.FillRectangle(Brushes.Silver, bounds.X - K, bounds.Y - K, bounds.Width + 2 * K, bounds.Height + 2 * K);
-
-            if (Value > 0)
+            if (DrawHatched)
             {
-                if (Value > MaxValue)
-                {
-                    e.Graphics.FillRectangle(OFBrush, bounds);
-                    e.Graphics.FillRectangle(FGBrush, bounds.X, bounds.Y, MaxValue / Value * bounds.Width, bounds.Height);
-                }
-                else
-                {
-                    e.Graphics.FillRectangle(FGBrush, bounds.X, bounds.Y, (int)Math.Ceiling(Value / MaxValue * bounds.Width), bounds.Height);
-                }
+                fillBrush = new HatchBrush(
+                    hatchstyle: HatchStyle.BackwardDiagonal,
+                    foreColor:  Color.FromArgb(0xFF - FillColor.R, 0xFF - FillColor.G, 0xFF - FillColor.B),
+                    backColor:  FillColor
+                );
             }
             else
             {
-                if (Math.Abs(Value) > MaxValue)
+                fillBrush = new SolidBrush(FillColor);
+            }
+
+            if (DrawHatchedOverflow)
+            {
+                overflowBrush = new HatchBrush(
+                    hatchstyle: HatchStyle.BackwardDiagonal,
+                    foreColor: Color.FromArgb(0xFF - OverflowColor.R, 0xFF - OverflowColor.G, 0xFF - OverflowColor.B),
+                    backColor: OverflowColor
+                );
+            }
+            else
+            {
+                overflowBrush = new SolidBrush(OverflowColor);
+            }
+            
+            //Gets the bounds to draw to
+            Rectangle bounds = new Rectangle(
+                x: BarMargin, 
+                y: BarMargin, 
+                width: Width - (2 * BarMargin), 
+                height: Height - (2 * BarMargin)
+            );
+
+            //Clears background with a dark color and draws the main frame
+            e.Graphics.Clear(ColorTranslator.FromHtml("#222"));
+
+            //What even is this constant?
+            const int BORDER_OFFSET = 3;
+            e.Graphics.FillRectangle(
+                brush: Brushes.Silver, 
+                x: bounds.X - BORDER_OFFSET, 
+                y: bounds.Y - BORDER_OFFSET, 
+                width: bounds.Width + 2 * BORDER_OFFSET, 
+                height: bounds.Height + 2 * BORDER_OFFSET
+            );
+
+            //Draw backgrounds of bars
+            if (Value > 0)
+            {
+                //Exceeding max value
+                if (Value > MaxValue)
                 {
-                    e.Graphics.FillRectangle(Brushes.OrangeRed, bounds);
-                    e.Graphics.FillRectangle(Brushes.Yellow, bounds.X, bounds.Y, MaxValue / Math.Abs(Value) * bounds.Width, bounds.Height);
+                    //First draw with the overflow brush, then over-draw normal fill where applicable
+                    e.Graphics.FillRectangle(overflowBrush, bounds);
+
+                    e.Graphics.FillRectangle(
+                        brush: fillBrush, 
+                        x: bounds.X, 
+                        y: bounds.Y, 
+                        width: MaxValue / Value * bounds.Width, 
+                        height: bounds.Height
+                    );
                 }
+
+                //In range
                 else
                 {
-                    e.Graphics.FillRectangle(Brushes.Yellow, bounds.X, bounds.Y, (int)Math.Ceiling(Math.Abs(Value) / MaxValue * bounds.Width), bounds.Height);
+                    //Just draw the fill
+                    e.Graphics.FillRectangle(
+                        brush: fillBrush, 
+                        x: bounds.X, 
+                        y: bounds.Y, 
+                        width: (int)Math.Ceiling(Value / MaxValue * bounds.Width), 
+                        height: bounds.Height
+                    );
                 }
             }
 
-
-            float localMaxValue = Math.Max(MaxValue, Math.Abs(Value));
-
-            for (int i = Interval; i < localMaxValue; i++)
+            //Draw background bars when negative (Not really supported well)
+            else
             {
-                if (i % Interval == 0)
+                //Subceeding -max value
+                if (Math.Abs(Value) > MaxValue)
                 {
-                    e.Graphics.DrawLine(
-                        pen: Pens.Silver, 
-                        x1: (i / localMaxValue * bounds.Width) - 1 + BarMargin, 
-                        y1: bounds.Top, 
-                        x2: (i / localMaxValue * bounds.Width) - 1 + BarMargin, 
-                        y2: bounds.Bottom    
-                    );
+                    //First draw with the overflow brush, then over-draw normal fill where applicable
+                    e.Graphics.FillRectangle(Brushes.OrangeRed, bounds);
 
-                    e.Graphics.DrawLine(
-                        pen: SystemPens.Control, 
-                        x1: (i / localMaxValue * bounds.Width) + BarMargin, 
-                        y1: bounds.Top, 
-                        x2: (i / localMaxValue * bounds.Width) + BarMargin, 
-                        y2: bounds.Bottom
+                    e.Graphics.FillRectangle(
+                        brush: Brushes.Yellow, 
+                        x: bounds.X, 
+                        y: bounds.Y, 
+                        width: MaxValue / Math.Abs(Value) * bounds.Width, 
+                        height: bounds.Height
                     );
+                }
 
-                    e.Graphics.DrawLine(
-                        pen: Pens.Silver, 
-                        x1: (i / localMaxValue * bounds.Width) + 1 + BarMargin,
-                        y1: bounds.Top, 
-                        x2: (i / localMaxValue * bounds.Width) + 1 + BarMargin, 
-                        y2: bounds.Bottom
-                    );
-
-                    e.Graphics.DrawString(
-                        s: GetStringForBarSegment(i), 
-                        font: SystemFonts.DefaultFont, 
-                        brush: STBrush, 
-                        point: new PointF(
-                            x: (i / localMaxValue * bounds.Width) - 1, 
-                            y: BarMargin), 
-                        format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
+                //In negative range
+                else
+                {
+                    e.Graphics.FillRectangle(
+                        brush: Brushes.Yellow, 
+                        x: bounds.X, 
+                        y: bounds.Y, 
+                        width: (int)Math.Ceiling(Math.Abs(Value) / MaxValue * bounds.Width), 
+                        height: bounds.Height
                     );
                 }
             }
 
-            base.OnPaint(e);
+            //This is either the actual max value, or the value that is overflowing
+            float effectiveMaxValue = Math.Max(MaxValue, Math.Abs(Value));
 
-            FGBrush.Dispose();
-            BGBrush.Dispose();
-            OFBrush.Dispose();
-            STBrush.Dispose();
+            /*
+             * Draw segment separators and strings
+             */
+            for (int i = Interval; i < effectiveMaxValue; i += Interval)
+            {
+                //Draws the separator between each segment (Left side)
+                e.Graphics.DrawLine(
+                    pen: new Pen(Color.Silver, 3),
+                    x1: (i / effectiveMaxValue * bounds.Width) - 1 + BarMargin,
+                    y1: bounds.Top,
+                    x2: (i / effectiveMaxValue * bounds.Width) - 1 + BarMargin,
+                    y2: bounds.Bottom
+                );
+
+                //Draws the separator between each segment (Middle)
+                e.Graphics.DrawLine(
+                    pen: SystemPens.Control,
+                    x1: (i / effectiveMaxValue * bounds.Width) + BarMargin,
+                    y1: bounds.Top,
+                    x2: (i / effectiveMaxValue * bounds.Width) + BarMargin,
+                    y2: bounds.Bottom
+                );
+
+                //Draws the separator between each segment (Right side)
+                e.Graphics.DrawLine(
+                    pen: Pens.Silver,
+                    x1: (i / effectiveMaxValue * bounds.Width) + 1 + BarMargin,
+                    y1: bounds.Top,
+                    x2: (i / effectiveMaxValue * bounds.Width) + 1 + BarMargin,
+                    y2: bounds.Bottom
+                );
+
+                //Draws the text
+                e.Graphics.DrawString(
+                    s: GetStringForBarSegment(i),
+                    font: SystemFonts.DefaultFont,
+                    brush: textBrush,
+                    point: new PointF(
+                        x: (i / effectiveMaxValue * bounds.Width) - 1,
+                        y: BarMargin),
+                    format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
+                );
+            }
+
+            //Done with the brushes
+            fillBrush.Dispose();
+            backgroundBrush.Dispose();
+            overflowBrush.Dispose();
+            textBrush.Dispose();
         }
 
         protected override void OnSizeChanged(EventArgs e)
