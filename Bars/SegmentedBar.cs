@@ -350,8 +350,8 @@ namespace Bars
                 float x = Math.Min(bounds.Width, (i / effectiveMaxValue * bounds.Width)) - 1f;
                 float y = BarMargin;
 
-                if (segmentTextSize.Width > segmentWidth - 10)
-                    x += segmentTextSize.Width - segmentWidth + 10;
+                if (segmentTextSize.Width > segmentWidth - 1)
+                    x += segmentTextSize.Width - segmentWidth + 1;
 
                 Brush brsh;
 
