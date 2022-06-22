@@ -179,9 +179,14 @@ namespace Bars
         {
             base.OnPaint(e);
 
+            //Set smoothing mode to anti-alias for smoothness
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
             /*
              * Create brushes based on settings
              */
+
             Brush backgroundBrush = new SolidBrush(BackColor);
             Brush textBrush = new SolidBrush(ForeColor);
             Brush textBrushOnDark = new SolidBrush(Color.GhostWhite);
