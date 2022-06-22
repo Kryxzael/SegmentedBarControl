@@ -184,6 +184,7 @@ namespace Bars
              */
             Brush backgroundBrush = new SolidBrush(BackColor);
             Brush textBrush = new SolidBrush(ForeColor);
+            Brush textBrushOnDark = new SolidBrush(Color.GhostWhite);
             Brush fillBrush, overflowBrush;
 
             if (DrawHatched)
@@ -350,8 +351,25 @@ namespace Bars
                 float y = BarMargin;
 
                 if (segmentTextSize.Width > segmentWidth - 10)
-                {
                     x += segmentTextSize.Width - segmentWidth + 10;
+
+                Brush brsh;
+
+                if (i > MaxValue)
+                {
+                    if (OverflowColor.GetBrightness() > 0.5f)
+                        brsh = textBrush;
+
+                    else
+                        brsh = textBrushOnDark;
+                }
+                else
+                {
+                    if (FillColor.GetBrightness() > 0.5f)
+                        brsh = textBrush;
+
+                    else
+                        brsh = textBrushOnDark;
                 }
 
                 if (!(segmentTextSize.Width > segmentWidth && i < effectiveMaxValue) && segmentTextSize.Height < Height)
@@ -359,7 +377,7 @@ namespace Bars
                     e.Graphics.DrawString(
                         s: segmentText,
                         font: SystemFonts.DefaultFont,
-                        brush: textBrush,
+                        brush: brsh,
                         point: new PointF(x, y),
                         format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
                     );
@@ -372,6 +390,7 @@ namespace Bars
             backgroundBrush.Dispose();
             overflowBrush.Dispose();
             textBrush.Dispose();
+            textBrushOnDark.Dispose();
         }
 
         protected override void OnSizeChanged(EventArgs e)
