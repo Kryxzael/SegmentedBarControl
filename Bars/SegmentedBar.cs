@@ -302,7 +302,7 @@ namespace Bars
             /*
              * Draw segment separators and strings
              */
-            for (int i = Interval; i < effectiveMaxValue; i += Interval)
+            for (int i = Interval; i < effectiveMaxValue + Interval; i += Interval)
             {
                 //Draws the separator between each segment (Left side)
                 e.Graphics.DrawLine(
@@ -331,16 +331,40 @@ namespace Bars
                     y2: bounds.Bottom
                 );
 
-                //Draws the text
-                e.Graphics.DrawString(
-                    s: GetStringForBarSegment(i),
-                    font: SystemFonts.DefaultFont,
-                    brush: textBrush,
-                    point: new PointF(
-                        x: (i / effectiveMaxValue * bounds.Width) - 1,
-                        y: BarMargin),
-                    format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
-                );
+                /*
+                 * Draws the text
+                 */
+                //Difference between the current item's separator and the previous item's separator (Making sure not to overflow the width)
+                float segmentWidth = Math.Min(bounds.Width, (i / effectiveMaxValue * bounds.Width)) - ((i - Interval) / effectiveMaxValue * bounds.Width) - BarMargin;
+
+                string segmentText = GetLongStringForBarSegment((int)Math.Min(i, Math.Ceiling(effectiveMaxValue)));
+                SizeF segmentTextSize = e.Graphics.MeasureString(segmentText, SystemFonts.DefaultFont);
+
+                if (segmentTextSize.Width > segmentWidth)
+                {
+                    segmentText = GetStringForBarSegment((int)Math.Min(i, Math.Ceiling(effectiveMaxValue)));
+                    segmentTextSize = e.Graphics.MeasureString(segmentText, SystemFonts.DefaultFont);
+                }
+
+                float x = Math.Min(bounds.Width, (i / effectiveMaxValue * bounds.Width)) - 1f;
+                float y = BarMargin;
+
+                if (segmentTextSize.Width > segmentWidth - 10)
+                {
+                    x += segmentTextSize.Width - segmentWidth + 10;
+                }
+
+                if (!(segmentTextSize.Width > segmentWidth && i < effectiveMaxValue) && segmentTextSize.Height < Height)
+                {
+                    e.Graphics.DrawString(
+                        s: segmentText,
+                        font: SystemFonts.DefaultFont,
+                        brush: textBrush,
+                        point: new PointF(x, y),
+                        format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
+                    );
+                }
+                
             }
 
             //Done with the brushes
@@ -362,6 +386,14 @@ namespace Bars
         /// <param name="segmentValue">The segment that is being drawn</param>
         /// <returns></returns>
         protected virtual string GetStringForBarSegment(int segmentValue) 
+            => segmentValue.ToString();
+
+        /// <summary>
+        /// Gets the text that will be displayed on the top-right of a bar-segment
+        /// </summary>
+        /// <param name="segmentValue">The segment that is being drawn</param>
+        /// <returns></returns>
+        protected virtual string GetLongStringForBarSegment(int segmentValue)
             => segmentValue.ToString();
         #endregion
 
