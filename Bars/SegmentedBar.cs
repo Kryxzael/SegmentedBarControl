@@ -343,16 +343,22 @@ namespace Bars
                 //Difference between the current item's separator and the previous item's separator (Making sure not to overflow the width)
                 float segmentWidth = Math.Min(bounds.Width, (i / effectiveMaxValue * bounds.Width)) - ((i - Interval) / effectiveMaxValue * bounds.Width) - BarMargin;
 
-                string segmentText = GetLongStringForBarSegment((int)Math.Min(i, Math.Ceiling(effectiveMaxValue)));
-                SizeF segmentTextSize = e.Graphics.MeasureString(segmentText, SystemFonts.DefaultFont);
+                string segmentText = "";
+                SizeF segmentTextSize = default;
 
-                if (segmentTextSize.Width > segmentWidth)
+                //Choose the first string that fits (or blank by default)
+                foreach (string segmentStringCandidate in GetStringsForBarSegment((int)Math.Min(i, Math.Ceiling(effectiveMaxValue))))
                 {
-                    segmentText = GetStringForBarSegment((int)Math.Min(i, Math.Ceiling(effectiveMaxValue)));
-                    segmentTextSize = e.Graphics.MeasureString(segmentText, SystemFonts.DefaultFont);
+                    segmentTextSize = e.Graphics.MeasureString(segmentStringCandidate, SystemFonts.DefaultFont);
+
+                    if (segmentTextSize.Width <= segmentWidth)
+                    {
+                        segmentText = segmentStringCandidate;
+                        break;
+                    }
                 }
 
-                float x = Math.Min(bounds.Width, (i / effectiveMaxValue * bounds.Width)) - 1f;
+                float x = Math.Min(bounds.Width, (i / effectiveMaxValue * bounds.Width));
                 float y = BarMargin;
 
                 if (segmentTextSize.Width > segmentWidth - 1)
@@ -377,17 +383,13 @@ namespace Bars
                         brsh = textBrushOnDark;
                 }
 
-                if (!(segmentTextSize.Width > segmentWidth && i < effectiveMaxValue) && segmentTextSize.Height < Height)
-                {
-                    e.Graphics.DrawString(
-                        s: segmentText,
-                        font: SystemFonts.DefaultFont,
-                        brush: brsh,
-                        point: new PointF(x, y),
-                        format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
-                    );
-                }
-                
+                e.Graphics.DrawString(
+                    s: segmentText,
+                    font: SystemFonts.DefaultFont,
+                    brush: brsh,
+                    point: new PointF(x, y),
+                    format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
+                );
             }
 
             //Done with the brushes
@@ -405,20 +407,13 @@ namespace Bars
         }
 
         /// <summary>
-        /// Gets the text that will be displayed on the top-right of a bar-segment
+        /// Gets the text that will be displayed on the top-right of a bar-segment. The first fitting string will be selected
         /// </summary>
         /// <param name="segmentValue">The segment that is being drawn</param>
         /// <returns></returns>
-        protected virtual string GetStringForBarSegment(int segmentValue) 
-            => segmentValue.ToString();
+        protected virtual string[] GetStringsForBarSegment(int segmentValue) 
+            => new string[] { segmentValue.ToString() };
 
-        /// <summary>
-        /// Gets the text that will be displayed on the top-right of a bar-segment
-        /// </summary>
-        /// <param name="segmentValue">The segment that is being drawn</param>
-        /// <returns></returns>
-        protected virtual string GetLongStringForBarSegment(int segmentValue)
-            => segmentValue.ToString();
         #endregion
 
     }
