@@ -351,7 +351,7 @@ namespace Bars
                 {
                     segmentTextSize = e.Graphics.MeasureString(segmentStringCandidate, SystemFonts.DefaultFont);
 
-                    if (segmentTextSize.Width <= segmentWidth)
+                    if (segmentTextSize.Width <= segmentWidth && segmentTextSize.Height < bounds.Height)
                     {
                         segmentText = segmentStringCandidate;
                         break;
