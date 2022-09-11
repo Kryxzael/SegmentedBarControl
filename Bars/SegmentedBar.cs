@@ -188,7 +188,7 @@ namespace Bars
              */
 
             Brush backgroundBrush = new SolidBrush(BackColor);
-            Brush textBrush = new SolidBrush(ForeColor);
+            Brush textBrush = new SolidBrush(Color.Black);
             Brush textBrushOnDark = new SolidBrush(Color.GhostWhite);
             Brush fillBrush, overflowBrush;
 
