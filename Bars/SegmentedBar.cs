@@ -175,7 +175,7 @@ namespace Bars
         #region Native Windows Events
         protected override bool DoubleBuffered => true;
 
-        protected override void OnPaint(PaintEventArgs e)
+        protected sealed override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
@@ -338,6 +338,12 @@ namespace Bars
                 );
 
                 /*
+                 * Custom painting
+                 */
+
+                DrawOnBar(e);
+
+                /*
                  * Draws the text
                  */
                 //Difference between the current item's separator and the previous item's separator (Making sure not to overflow the width)
@@ -365,23 +371,42 @@ namespace Bars
                     x += segmentTextSize.Width - segmentWidth + 1;
 
                 Brush brsh;
+                Brush shadowBrsh;
 
                 if (i > MaxValue)
                 {
                     if (OverflowColor.GetBrightness() > 0.5f)
+                    {
                         brsh = textBrush;
-
+                        shadowBrsh = textBrushOnDark;
+                    }
                     else
+                    {
                         brsh = textBrushOnDark;
+                        shadowBrsh = textBrush;
+                    }
                 }
                 else
                 {
                     if (FillColor.GetBrightness() > 0.5f)
+                    {
                         brsh = textBrush;
-
+                        shadowBrsh = textBrushOnDark;
+                    }
                     else
+                    {
                         brsh = textBrushOnDark;
+                        shadowBrsh = textBrush;
+                    }
                 }
+
+                e.Graphics.DrawString(
+                    s: segmentText,
+                    font: SystemFonts.DefaultFont,
+                    brush: shadowBrsh,
+                    point: new PointF(x + 1.5f, y + 1.5f),
+                    format: new StringFormat(StringFormatFlags.DirectionRightToLeft)
+                );
 
                 e.Graphics.DrawString(
                     s: segmentText,
@@ -398,6 +423,15 @@ namespace Bars
             overflowBrush.Dispose();
             textBrush.Dispose();
             textBrushOnDark.Dispose();
+        }
+
+        /// <summary>
+        /// Allows derived classes to draw textures on the bar before the text
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void DrawOnBar(PaintEventArgs e)
+        {
+
         }
 
         protected override void OnSizeChanged(EventArgs e)
