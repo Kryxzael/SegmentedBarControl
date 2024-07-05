@@ -310,16 +310,16 @@ namespace Bars
              */
             for (int i = Interval; i < effectiveMaxValue + Interval; i += Interval)
             {
-                //Draws the separator between each segment (Left side)
+                //Draws the separator between each segment (Behind)
                 e.Graphics.DrawLine(
                     pen: new Pen(Color.Silver, 3),
-                    x1: (i / effectiveMaxValue * bounds.Width) - 1 + BarMargin,
+                    x1: (i / effectiveMaxValue * bounds.Width) + BarMargin,
                     y1: bounds.Top,
-                    x2: (i / effectiveMaxValue * bounds.Width) - 1 + BarMargin,
+                    x2: (i / effectiveMaxValue * bounds.Width) + BarMargin,
                     y2: bounds.Bottom
                 );
 
-                //Draws the separator between each segment (Middle)
+                //Draws the separator between each segment (Middle Front)
                 e.Graphics.DrawLine(
                     pen: SystemPens.Control,
                     x1: (i / effectiveMaxValue * bounds.Width) + BarMargin,
