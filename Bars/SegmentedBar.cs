@@ -327,22 +327,16 @@ namespace Bars
                     x2: (i / effectiveMaxValue * bounds.Width) + BarMargin,
                     y2: bounds.Bottom
                 );
+            }
 
-                //Draws the separator between each segment (Right side)
-                e.Graphics.DrawLine(
-                    pen: Pens.Silver,
-                    x1: (i / effectiveMaxValue * bounds.Width) + 1 + BarMargin,
-                    y1: bounds.Top,
-                    x2: (i / effectiveMaxValue * bounds.Width) + 1 + BarMargin,
-                    y2: bounds.Bottom
-                );
+            /*
+            * Custom painting
+            */
 
-                /*
-                 * Custom painting
-                 */
+            DrawOnBar(e);
 
-                DrawOnBar(e);
-
+            for (int i = Interval; i < effectiveMaxValue + Interval; i += Interval)
+            { 
                 /*
                  * Draws the text
                  */
