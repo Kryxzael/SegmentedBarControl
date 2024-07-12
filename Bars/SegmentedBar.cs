@@ -37,7 +37,7 @@ namespace Bars
                     throw new ArgumentOutOfRangeException("Value cannot be negative");
 
                 _value = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -53,7 +53,7 @@ namespace Bars
                     throw new ArgumentOutOfRangeException("Maxvalue cannot be negative or zero");
 
                 _maxValue = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -66,7 +66,7 @@ namespace Bars
             set
             {
                 _valueOverr = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -82,7 +82,7 @@ namespace Bars
                     throw new ArgumentOutOfRangeException("Interval must be atleast 1");
 
                 _interval = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -95,7 +95,7 @@ namespace Bars
             set
             {
                 _fillColor = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -108,7 +108,7 @@ namespace Bars
             set
             {
                 _overflowColor = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -121,7 +121,7 @@ namespace Bars
             set
             {
                 _margin = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -134,7 +134,7 @@ namespace Bars
             set 
             {
                 _drawHatched = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -147,7 +147,7 @@ namespace Bars
             set
             {
                 _drawHatchedOverflow = value;
-                Refresh();
+                Invalidate();
             }
         }
 
@@ -167,8 +167,7 @@ namespace Bars
             _overflowColor = settings.OverflowColor;
             _margin = settings.Margin;
 
-            Refresh();
-
+            Invalidate();
         }
         #endregion
 
